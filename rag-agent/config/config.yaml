@@ -1,0 +1,36 @@
+# RAG-Agent 主配置文件（示例）
+# 所有路径均相对于项目根目录
+
+# 服务端配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+# LLM / Embeddings 配置（示例，可按需替换为通义千问等）
+llm:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.1
+  api_key_env: "API_KEY"
+  base_url_env: "BASE_URL"
+
+embeddings:
+  provider: "openai"
+  model: "text-embedding-ada-002"
+
+# 文本分块参数
+text_splitter:
+  chunk_size: 500
+  chunk_overlap: 50
+
+# 向量库配置
+vectorstore:
+  provider: "faiss"
+  top_k: 4
+
+# 路径配置
+paths:
+  uploads: "data/uploads"
+  processed: "data/processed"
+  faiss_index: "data/faiss_index"
+  logs: "logs"

@@ -1,0 +1,34 @@
+# RAG-Agent 项目忽略文件
+# --------- 环境变量 ---------
+.env
+.env.local
+.env.*.local
+
+# --------- Python 缓存 ---------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.installed.cfg
+*.egg
+.coverage
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --------- 虚拟环境 ---------
+venv/
+.venv/
+env/
+.python
+
+# --------- 运行时数据 ---------
+data/
+logs/
+*.log
+
+# --------- IDE / 编辑 ---------
+.idea/
+.vscode/
+*.swp
+.DS_Store

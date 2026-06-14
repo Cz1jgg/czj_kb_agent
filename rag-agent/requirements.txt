@@ -1,0 +1,11 @@
+# RAG-Agent 依赖
+langchain
+langchain-openai
+faiss-cpu
+PyPDF2
+python-docx
+python-dotenv
+fastapi
+uvicorn
+pydantic
+PyYAML
