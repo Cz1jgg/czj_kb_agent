@@ -2,36 +2,71 @@
 #  全局配置（程序启动时由 core/config_loader.py 读取）
 #  Windows 本地运行，个人使用场景
 # =========================================
+#  优先级说明：
+#    .env 中的环境变量  >  本文件中的值  >  代码内置默认值
+# =========================================
 
-# -------- 服务 --------
+# -------- 服务配置 --------
 server:
-  host: "0.0.0.0"        # 允许局域网访问；仅本机则用 127.0.0.1
-  port: 8000             # 服务固定端口
+  host: "0.0.0.0"           # 监听地址：0.0.0.0 允许局域网访问；127.0.0.1 仅本机
+  port: 8000                # 服务端口（固定为 8000）
+  log_level: "INFO"         # 日志级别：DEBUG / INFO / WARNING / ERROR
 
-# -------- 大模型 --------
+# -------- LLM 模型配置（API Key 请在 .env 中填写，此处仅填模型名与参数）--------
 llm:
-  provider: "dashscope"  # 可选：dashscope / openai
-  model: "qwen-plus"     # 模型名称
-  temperature: 0.1
+  provider: "dashscope"     # 可选：dashscope / openai / deepseek
+  model: "qwen-plus"        # 模型名称（如 qwen-plus / gpt-4o-mini / deepseek-chat）
+  temperature: 0.1          # 生成温度，越小越稳定
+  max_tokens: 2048          # 单次生成最大 token 数
+  timeout: 30               # 请求超时（秒）
 
-# -------- Embedding 模型 --------
+# -------- Embedding 模型配置（API Key 与 LLM 共用 .env 中的配置）--------
 embeddings:
-  provider: "dashscope"  # 可选：dashscope / openai
-  model: "text-embedding-v2"
+  provider: "dashscope"     # 可选：dashscope / openai
+  model: "text-embedding-v2" # 模型名称
+  batch_size: 16            # 批处理大小
+  timeout: 30               # 请求超时（秒）
 
-# -------- 文本分块 --------
+# -------- 文本分块参数（文档解析为向量前的切分规则）--------
 splitter:
-  chunk_size: 500        # 每块字符数
-  chunk_overlap: 50      # 块间重叠字符数
+  chunk_size: 500           # 每块字符数（中文建议 300-800）
+  chunk_overlap: 50         # 块间重叠字符数，避免语义被切开
+  separator: "\n"           # 分块优先分隔符
 
-# -------- 数据存储路径 --------
+# -------- 向量库（FAISS）--------
+vector_store:
+  type: "faiss"             # 向量库类型（当前仅支持 faiss）
+  # 索引持久化目录（相对路径，相对于项目根目录；也可填绝对路径）
+  path: "data/vector_store"
+  top_k: 4                  # 检索时返回的最相关块数
+  score_threshold: 0.0      # 相似度过滤阈值，0.0 表示不过滤
+
+# -------- 文件上传与支持格式 --------
+upload:
+  # 上传文件落地目录（相对路径，相对于项目根目录）
+  save_dir: "data/documents"
+  # 解析后中间产物目录（便于断点重跑/排查分块）
+  parsed_dir: "data/parsed"
+  # 单个文件大小上限（MB）
+  max_file_size_mb: 50
+  # 支持的文件扩展名（小写，含点）
+  allow_extensions:
+    - ".pdf"
+    - ".docx"
+    - ".doc"
+    - ".md"
+    - ".txt"
+    - ".markdown"
+
+# -------- 数据路径总览（与各模块中的 path 字段保持一致即可）--------
 paths:
-  documents: "data/documents"       # 原始文档目录
-  parsed: "data/parsed"             # 解析后中间产物
-  vector_store: "data/vector_store" # FAISS 索引持久化目录
-  logs: "logs"                      # 日志目录
+  documents: "data/documents"   # 原始文档目录（与 upload.save_dir 一致）
+  parsed: "data/parsed"         # 解析后中间产物目录（与 upload.parsed_dir 一致）
+  vector_store: "data/vector_store" # FAISS 索引目录（与 vector_store.path 一致）
+  logs: "logs"                  # 日志目录
 
-# -------- Java 服务对接（若需要主动回写时使用） --------
+# -------- Java 服务对接（当本 Agent 需要主动回写 Java 服务时使用）--------
 java_service:
-  base_url: "http://127.0.0.1:9000"
-  timeout: 10
+  base_url: "http://127.0.0.1:9000"  # Java 服务地址
+  timeout: 10                        # 请求超时（秒）
+  callback_path: "/api/kb/callback/qa" # 回写接口路径
