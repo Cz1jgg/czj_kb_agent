@@ -14,11 +14,12 @@ server:
 
 # -------- LLM 模型配置（API Key 请在 .env 中填写，此处仅填模型名与参数）--------
 llm:
-  provider: "dashscope"     # 可选：dashscope / openai / deepseek
-  model: "qwen-plus"        # 模型名称（如 qwen-plus / gpt-4o-mini / deepseek-chat）
-  temperature: 0.1          # 生成温度，越小越稳定
-  max_tokens: 2048          # 单次生成最大 token 数
-  timeout: 30               # 请求超时（秒）
+  provider: "openai"             # OpenAI 兼容接口（火山方舟/豆包/DeepSeek 等均通过此接口接入）
+  model: "doubao-lite-128k"     # 火山方舟豆包模型（替换原通义千问 qwen-plus）
+  base_url: "https://ark.cn-beijing.volces.com/api/v3"  # 火山方舟 OpenAI 兼容接口地址
+  temperature: 0.1              # 生成温度，越小越稳定
+  max_tokens: 8192              # 单次生成最大 token 数
+  timeout: 60                   # 请求超时（秒）
 
 # -------- Embedding 模型配置（API Key 与 LLM 共用 .env 中的配置）--------
 embeddings:

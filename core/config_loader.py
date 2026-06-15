@@ -123,11 +123,12 @@ class ServerConfig:
 @dataclass
 class LLMConfig:
     """LLM 模型配置。"""
-    provider: str = "dashscope"
-    model: str = "qwen-plus"
+    provider: str = "openai"
+    model: str = "doubao-lite-128k"
+    base_url: str = "https://ark.cn-beijing.volces.com/api/v3"  # 火山方舟 OpenAI 兼容接口
     temperature: float = 0.1
-    max_tokens: int = 2048
-    timeout: int = 30
+    max_tokens: int = 8192
+    timeout: int = 60
     # API Key：从 .env 读取，不在 YAML 中硬编码
     api_key: str = ""
 
@@ -140,14 +141,16 @@ class LLMConfig:
                 self.temperature = float(os.getenv("LLM_TEMPERATURE", "").strip())
             except ValueError:
                 raise ConfigError("LLM_TEMPERATURE 必须是数字（0.0 ~ 2.0）")
+        if os.getenv("OPENAI_BASE_URL", "").strip():
+            self.base_url = os.getenv("OPENAI_BASE_URL", "").strip()
 
-        # 读取 API Key（通义千问 / OpenAI 二选一）
-        self.api_key = os.getenv("DASHSCOPE_API_KEY", "").strip()
+        # 读取 API Key：火山方舟 ARK > OpenAI API Key
+        self.api_key = os.getenv("ARK_API_KEY", "").strip()
         if not self.api_key:
             self.api_key = os.getenv("OPENAI_API_KEY", "").strip()
         if not self.api_key:
             _logger.warning(
-                "⚠️  未配置 LLM API Key（DASHSCOPE_API_KEY 或 OPENAI_API_KEY 均为空）。"
+                "⚠️  未配置 LLM API Key（ARK_API_KEY 或 OPENAI_API_KEY 均为空）。"
                 "问答功能将无法使用，请在 .env 中填写。"
             )
 
@@ -278,7 +281,7 @@ class Settings:
             f"项目根目录: {self.project_root}",
             f"服务        : http://{self.server.host}:{self.server.port}",
             f"日志级别    : {self.server.log_level}",
-            f"LLM         : {self.llm.provider} / {self.llm.model} (api_key={'已配置' if self.llm.api_key else '未配置'})",
+            f"LLM         : {self.llm.provider} / {self.llm.model} @ {self.llm.base_url} (api_key={'已配置' if self.llm.api_key else '未配置'})",
             f"Embedding   : {self.embeddings.provider} / {self.embeddings.model}",
             f"分块参数    : chunk_size={self.splitter.chunk_size}, overlap={self.splitter.chunk_overlap}",
             f"FAISS 路径  : {self.vector_store.path}",
@@ -352,11 +355,12 @@ def build_settings(settings_path: Path = DEFAULT_SETTINGS_PATH) -> Settings:
             log_level=_pick(server_yaml, "log_level", "INFO"),
         ),
         llm=LLMConfig(
-            provider=_pick(llm_yaml, "provider", "dashscope"),
-            model=_pick(llm_yaml, "model", "qwen-plus"),
+            provider=_pick(llm_yaml, "provider", "openai"),
+            model=_pick(llm_yaml, "model", "doubao-lite-128k"),
+            base_url=_pick(llm_yaml, "base_url", "https://ark.cn-beijing.volces.com/api/v3"),
             temperature=float(_pick(llm_yaml, "temperature", 0.1)),
-            max_tokens=int(_pick(llm_yaml, "max_tokens", 2048)),
-            timeout=int(_pick(llm_yaml, "timeout", 30)),
+            max_tokens=int(_pick(llm_yaml, "max_tokens", 8192)),
+            timeout=int(_pick(llm_yaml, "timeout", 60)),
         ),
         embeddings=EmbeddingConfig(
             provider=_pick(emb_yaml, "provider", "dashscope"),
@@ -397,7 +401,7 @@ def build_settings(settings_path: Path = DEFAULT_SETTINGS_PATH) -> Settings:
         ),
         project_root=str(PROJECT_ROOT),
         env={
-            "DASHSCOPE_API_KEY": os.getenv("DASHSCOPE_API_KEY", ""),
+            "ARK_API_KEY": os.getenv("ARK_API_KEY", ""),
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY", ""),
             "OPENAI_BASE_URL": os.getenv("OPENAI_BASE_URL", ""),
             "JAVA_SERVICE_BASE_URL": os.getenv("JAVA_SERVICE_BASE_URL", ""),
