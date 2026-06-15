@@ -68,7 +68,7 @@ def _build_embeddings(
         provider: 提供商（默认从 settings 读取）
         model: 模型名（默认从 settings 读取）
         api_key: API Key（默认从 settings 读取）
-        base_url: API 地址（默认从 settings 读取）
+        base_url: API 地址（默认从 settings.llm.base_url 读取）
 
     返回：
         LangChain 兼容的 Embeddings 实例
@@ -76,27 +76,40 @@ def _build_embeddings(
     _provider = provider or settings.embeddings.provider
     _model = model or settings.embeddings.model
     _api_key = api_key or settings.embeddings.api_key
-    _base_url = base_url or ""  # Embedding 通常不需要 base_url
-
-    if not _api_key:
-        raise EmbeddingModelError(
-            "❌ Embedding API Key 未配置（请在 .env 中设置 ARK_API_KEY 或 OPENAI_API_KEY）"
-        )
 
     try:
-        if _provider in ("openai", "dashscope", "volcengine"):
-            # OpenAI 兼容接口（火山方舟 / 通义 / DeepSeek 等均通过此方式接入）
+        if _provider == "sentence_transformers":
+            # 本地 Sentence Transformers 模型（无需 API Key）
             try:
-                from langchain_openai import OpenAIEmbeddings
+                from langchain_community.embeddings import SentenceTransformerEmbeddings
             except ImportError:
                 raise EmbeddingModelError(
-                    "❌ 未安装 langchain-openai，请执行：pip install langchain-openai"
+                    "❌ 未安装 sentence-transformers，请执行：pip install sentence-transformers"
                 )
 
-            return OpenAIEmbeddings(
+            _logger.info("使用本地 Sentence Transformers 模型：%s", _model)
+            return SentenceTransformerEmbeddings(model_name=_model)
+
+        elif _provider in ("openai", "dashscope", "volcengine"):
+            # OpenAI 兼容接口（火山方舟 / 通义 / DeepSeek 等均通过此方式接入）
+            _base_url = base_url or getattr(settings.llm, "base_url", "") or ""
+
+            if not _api_key:
+                raise EmbeddingModelError(
+                    "❌ Embedding API Key 未配置（请在 .env 中设置 ARK_API_KEY 或 OPENAI_API_KEY）"
+                )
+
+            try:
+                from embedding_qwen import QwenTextEmbedding
+            except ImportError:
+                raise EmbeddingModelError(
+                    "❌ 未找到 embedding_qwen 模块，请确认文件存在"
+                )
+
+            return QwenTextEmbedding(
                 model=_model,
                 api_key=_api_key,
-                base_url=_base_url if _base_url else None,
+                base_url=_base_url if _base_url else "https://dashscope.aliyuncs.com/compatible-mode/v1",
             )
         else:
             raise EmbeddingModelError(f"❌ 不支持的 Embedding provider：{_provider}")
