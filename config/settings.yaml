@@ -1,0 +1,37 @@
+# =========================================
+#  全局配置（程序启动时由 core/config_loader.py 读取）
+#  Windows 本地运行，个人使用场景
+# =========================================
+
+# -------- 服务 --------
+server:
+  host: "0.0.0.0"        # 允许局域网访问；仅本机则用 127.0.0.1
+  port: 8000             # 服务固定端口
+
+# -------- 大模型 --------
+llm:
+  provider: "dashscope"  # 可选：dashscope / openai
+  model: "qwen-plus"     # 模型名称
+  temperature: 0.1
+
+# -------- Embedding 模型 --------
+embeddings:
+  provider: "dashscope"  # 可选：dashscope / openai
+  model: "text-embedding-v2"
+
+# -------- 文本分块 --------
+splitter:
+  chunk_size: 500        # 每块字符数
+  chunk_overlap: 50      # 块间重叠字符数
+
+# -------- 数据存储路径 --------
+paths:
+  documents: "data/documents"       # 原始文档目录
+  parsed: "data/parsed"             # 解析后中间产物
+  vector_store: "data/vector_store" # FAISS 索引持久化目录
+  logs: "logs"                      # 日志目录
+
+# -------- Java 服务对接（若需要主动回写时使用） --------
+java_service:
+  base_url: "http://127.0.0.1:9000"
+  timeout: 10
