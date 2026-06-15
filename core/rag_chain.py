@@ -11,7 +11,17 @@ from core.vector_store import VectorStoreManager, VectorStoreError
 # 日志
 _logger = logging.getLogger(__name__)
 
+# class RagChain:
+#     """问答链：将检索器、提示词、LLM 组装为完整问答流程。"""
 
+#     def __init__(
+#         self,
+#         retriever=None,
+#         llm=None,
+#         qa_template: str = "",
+#         condense_template: str = "",
+#         settings: Optional[Settings] = None,
+#     ):
 class RagChain:
     """问答链：将检索器、提示词、LLM 组装为完整问答流程。"""
 
