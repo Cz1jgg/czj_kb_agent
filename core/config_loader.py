@@ -167,8 +167,8 @@ class EmbeddingConfig:
     def __post_init__(self) -> None:
         if os.getenv("EMBEDDING_MODEL", "").strip():
             self.model = os.getenv("EMBEDDING_MODEL", "").strip()
-        # 与 LLM 共用 API Key
-        self.api_key = os.getenv("DASHSCOPE_API_KEY", "").strip() or os.getenv(
+        # Embedding API Key：火山方舟 ARK > OpenAI
+        self.api_key = os.getenv("ARK_API_KEY", "").strip() or os.getenv(
             "OPENAI_API_KEY", ""
         ).strip()
 
@@ -424,15 +424,32 @@ def load_prompts(prompts_path: Path = DEFAULT_PROMPTS_PATH) -> Dict[str, str]:
 # ============================================================
 # 全局单例：其他模块直接 `from core.config_loader import settings`
 # ============================================================
-# 仅在首次导入时构造一次，后续都复用同一个对象
+# _loaded_env_mtime: 记录上次加载时的 .env 文件修改时间，用于检测变更
+_loaded_env_mtime: Optional[float] = None
 _settings: Optional[Settings] = None
 
 
 def get_settings(reload: bool = False) -> Settings:
-    """获取全局配置单例；reload=True 时强制重新加载。"""
-    global _settings
+    """
+    获取全局配置单例。
+
+    - reload=True 时强制重新加载（用于调试修改了 settings.yaml 的情况）
+    - .env 文件存在但上次加载时不存在时，自动重新加载
+    """
+    global _settings, _loaded_env_mtime
+
     if _settings is None or reload:
         _settings = build_settings()
+        _loaded_env_mtime = ENV_PATH.stat().st_mtime if ENV_PATH.exists() else None
+        return _settings
+
+    # .env 文件在首次加载后被创建，自动重新加载
+    if ENV_PATH.exists() and _loaded_env_mtime is None:
+        _logger.debug(".env 文件已创建，重新加载配置")
+        _settings = build_settings()
+        _loaded_env_mtime = ENV_PATH.stat().st_mtime
+        return _settings
+
     return _settings
 
 
